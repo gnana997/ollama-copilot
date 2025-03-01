@@ -27,6 +27,14 @@
       {
         "command": "ollama-copilot.searchavailablemodels",
         "title": "Search Available Models"
+      },
+      {
+        "command": "ollama-copilot.selectDefaultModel",
+        "title": "Select Default Model"
+      },
+      {
+        "command": "ollama-copilot.clearCompletionCache",
+        "title": "Clear Completion Cache"
       }
     ]
   },
