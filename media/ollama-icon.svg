@@ -1,5 +1,62 @@
-<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor"/>
-  <path d="M11 7H13V9H11V7Z" fill="currentColor"/>
-  <path d="M11 11H13V17H11V11Z" fill="currentColor"/>
-</svg> 
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle with modern gradient -->
+  <circle cx="64" cy="64" r="60" fill="url(#backgroundGrad)" />
+
+  <!-- Large Curly Braces -->
+  <path d="M30 30C35 40 30 48 30 64C30 80 35 88 30 98" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/>
+  <path d="M98 30C93 40 98 48 98 64C98 80 93 88 98 98" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Opening Curl Top -->
+  <path d="M30 30C38 30 40 36 40 40" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/>
+  <!-- Opening Curl Bottom -->
+  <path d="M30 98C38 98 40 92 40 88" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- Closing Curl Top -->
+  <path d="M98 30C90 30 88 36 88 40" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/>
+  <!-- Closing Curl Bottom -->
+  <path d="M98 98C90 98 88 92 88 88" stroke="#FFD700" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Subtle Llama Head Silhouette -->
+  <path d="M64 34C56 34 52 42 52 48C52 54 53 57 55 60C56 63 56 66 56 70C56 74 55 80 55 84C55 88 58 90 64 90C70 90 73 88 73 84C73 80 72 74 72 70C72 66 72 63 73 60C75 57 76 54 76 48C76 42 72 34 64 34Z" fill="url(#llamaGrad)" opacity="0.9"/>
+  
+  <!-- Stylized Brain / Neural Network -->
+  <path d="M56 46C60 44 68 44 72 46" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M53 52C60 50 68 50 75 52" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M54 58C60 56 68 56 74 58" stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Code Snippet (More Modern) -->
+  <rect x="44" y="66" width="40" height="18" rx="3" fill="#2E2E2E" filter="url(#shadow)"/>
+  <path d="M48 72H58" stroke="#64D2FF" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M48 76H54" stroke="#64D2FF" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M48 80H60" stroke="#64D2FF" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M64 72L68 76L64 80" stroke="#FF6B6B" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <path d="M72 72L76 76L72 80" stroke="#4CAF50" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Chat Interface Dots -->
+  <circle cx="52" cy="94" r="3" fill="#FFD700"/>
+  <circle cx="64" cy="94" r="3" fill="#FFD700"/>
+  <circle cx="76" cy="94" r="3" fill="#FFD700"/>
+
+  <!-- Gradient Definitions -->
+  <defs>
+    <linearGradient id="backgroundGrad" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2C3E50"/>
+      <stop offset="100%" stop-color="#1A1A2E"/>
+    </linearGradient>
+    
+    <linearGradient id="llamaGrad" x1="64" y1="34" x2="64" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#555580"/>
+      <stop offset="100%" stop-color="#3A3A60"/>
+    </linearGradient>
+    
+    <filter id="shadow" x="40" y="64" width="48" height="22" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+      <feOffset dy="1"/>
+      <feGaussianBlur stdDeviation="1"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.3 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"/>
+    </filter>
+  </defs>
+</svg>
