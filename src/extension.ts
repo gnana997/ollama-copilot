@@ -3,6 +3,10 @@
 import * as vscode from "vscode";
 import ollama from "ollama";
 import { registerInlineCompletionProvider, completionProvider } from "./inlineCompletionProvider";
+import { ChatPanel } from "./chatInterface/ChatPanel";
+import { SidebarChatViewProvider } from "./chatInterface/SidebarChatViewProvider";
+import { getAvailableOllamaModels, getSelectedModel } from "./utils/modelHelpers";
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
@@ -14,6 +18,16 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 	registerInlineCompletionProvider(context);
 
+	// Register the chat sidebar view provider
+	const sidebarChatViewProvider = new SidebarChatViewProvider(context.extensionUri);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(
+			SidebarChatViewProvider.viewType,
+			sidebarChatViewProvider
+		)
+	);
+
+	// Register the command to select default model
 	context.subscriptions.push(vscode.commands.registerCommand("ollama-copilot.selectDefaultModel", async () => {
 		await getSelectedModel();
 	}));
@@ -26,37 +40,28 @@ export async function activate(context: vscode.ExtensionContext) {
 			vscode.window.showWarningMessage("Ollama Copilot: Completion provider not initialized");
 		}
 	}));
+
+	// Register the command to search available models
+	context.subscriptions.push(vscode.commands.registerCommand("ollama-copilot.searchavailablemodels", async () => {
+		const availableModels = await getAvailableOllamaModels();
+		
+		if (availableModels.length === 0) {
+			vscode.window.showInformationMessage("No Ollama models found");
+			return;
+		}
+		
+		const modelList = availableModels.map(model => {
+			return `${model.label}${model.details ? ` (${model.details})` : ''}`;
+		}).join('\n');
+		
+		vscode.window.showInformationMessage(`Available models:\n${modelList}`);
+	}));
+
+	// Register the command to open the chat panel
+	context.subscriptions.push(vscode.commands.registerCommand("ollama-copilot.openChatPanel", () => {
+		ChatPanel.createOrShow(context.extensionUri);
+	}));
 }
-
-async function getSelectedModel() {
-	const config = vscode.workspace.getConfiguration();
-	const availableModels = await getAvailableOllamaModels();
-
-	if (availableModels.length === 0) {
-		vscode.window.showWarningMessage("No models found");
-		return;
-	}
-
-	const model = await vscode.window.showQuickPick(availableModels, {
-		placeHolder: "Select a model",
-		matchOnDetail: true,
-	});
-
-	if (model) {
-		const selectedModel = model.label;
-		await config.update("ollama.defaultModel", selectedModel, true);
-		vscode.window.showInformationMessage(`Selected model: ${selectedModel}`);
-	}
-}
-
-
-async function getAvailableOllamaModels() {
-	const availableModels = (await ollama.list()).models.map((model) => {
-		return { label: model.name, details: `${model.details.family} ${model.details.parameter_size}` };
-	});
-	return availableModels;
-}
-
 
 // This method is called when your extension is deactivated
 export function deactivate() {}

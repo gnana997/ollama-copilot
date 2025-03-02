@@ -14,6 +14,24 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ollama-chat",
+          "title": "Ollama Chat",
+          "icon": "media/ollama-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ollama-chat": [
+        {
+          "id": "ollamaChatView",
+          "name": "Chat",
+          "type": "webview"
+        }
+      ]
+    },
     "configuration": {
       "title": "Ollama Copilot",
       "properties": {
@@ -35,6 +53,10 @@
       {
         "command": "ollama-copilot.clearCompletionCache",
         "title": "Clear Completion Cache"
+      },
+      {
+        "command": "ollama-copilot.openChatPanel",
+        "title": "Open Ollama Chat Panel"
       }
     ]
   },

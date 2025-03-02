@@ -1,71 +1,155 @@
-# ollama-copilot README
+# Ollama Copilot
 
-This is the README for your extension "ollama-copilot". After writing up a brief description, we recommend including the following sections.
+Ollama Copilot integrates local LLMs from [Ollama](https://ollama.ai/) directly into VS Code, providing AI-powered code completion and an interactive chat experience with your own locally-running models.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- **AI-powered code completions**: Get contextual code suggestions as you type
+- **Dedicated chat interface**: Ask questions about your code and get detailed responses
+- **Local model selection**: Choose from any model installed in Ollama
+- **Context-aware assistance**: The extension can analyze:
+  - Selected code snippets
+  - Specific files you choose
+  - Your entire workspace
+- **Privacy-focused**: All processing happens locally on your machine through Ollama
 
-For example if there is an image subfolder under your extension project workspace:
+## Prerequisites
 
-\!\[feature X\]\(images/feature-x.png\)
+1. [Ollama](https://ollama.ai/) must be installed and running on your system
+2. You should have at least one model pulled in Ollama (see [model recommendations](#model-recommendations))
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Installation
 
-## Requirements
+1. Install the extension from the VS Code marketplace
+2. Ensure Ollama is running in the background
+3. Select a default model when prompted (or set it later in settings)
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### Installing Models in Ollama
 
-## Extension Settings
+Before using the extension, you need to download at least one model in Ollama:
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+**Command Line:**
+```bash
+# Download a code-optimized model
+ollama pull codellama:13b
 
-For example:
+# Download a general-purpose model
+ollama pull llama3:8b
 
-This extension contributes the following settings:
+# List available models
+ollama list
+```
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+**Web UI:** You can also download models through the Ollama web interface at http://localhost:11434 if you have it enabled.
 
-## Known Issues
+## Usage
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+### Code Completion
 
-## Release Notes
+Code completion is automatically active while you type. The extension analyzes your code and suggests completions based on your context.
 
-Users appreciate release notes as you update your extension.
+### Chat Interface
 
-### 1.0.0
+Access the chat interface through the Ollama Chat icon in the activity bar (sidebar):
 
-Initial release of ...
+1. Click on the Ollama Chat icon in the sidebar
+2. Select a model from the dropdown menu
+3. Type your question in the input box and click Send
 
-### 1.0.1
+#### Adding Context
 
-Fixed issue #.
+The chat interface provides several ways to add context:
 
-### 1.1.0
+- **Add Selected Code**: Select code in your editor, then click the "📄" button to add it to your conversation
+- **Add File Context**: Click the "📎" button to choose specific files for reference
+- **Workspace Context**: Enable the "@workspace" checkbox to analyze your entire workspace
 
-Added features X, Y, and Z.
+### Example Prompts
 
----
+Here are some effective prompts to try with your code:
 
-## Following extension guidelines
+#### Code Improvement
+- "How can I optimize this function for better performance?"
+- "Refactor this code to be more readable"
+- "Find potential bugs in this code"
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+#### Learning and Understanding
+- "Explain what this code does in simple terms"
+- "What design pattern is being used here?"
+- "How does this algorithm work?"
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+#### Development Assistance
+- "Generate unit tests for this function"
+- "What's a better way to implement this feature?"
+- "Help me debug this error: [paste error message]"
 
-## Working with Markdown
+#### With Context
+- "I'm working on a React component. How can I prevent unnecessary re-renders?"
+- "This is my Express route handler. How should I add proper error handling?"
+- "I'm using TypeScript with this Angular service. Help me fix these type errors."
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+### Commands
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+The extension provides the following commands (access via Command Palette - `Ctrl+Shift+P` or `Cmd+Shift+P`):
 
-## For more information
+- **Open Ollama Chat Panel**: Opens the chat panel as a separate view
+- **Select Default Model**: Change the default Ollama model
+- **Search Available Models**: List all available models in Ollama
+- **Clear Completion Cache**: Clear the cached completions
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+## Model Recommendations
 
-**Enjoy!**
+> ⚠️ **Important**: The quality of suggestions and responses directly depends on the capability of your selected model. Larger, more capable models will generally provide better results.
+
+For the best experience, we recommend:
+
+- **Code Completion**: Models fine-tuned for code generation (CodeLlama, WizardCoder)
+- **General Assistance**: Larger models with 7B+ parameters
+- **Specialized Tasks**: Models trained for specific programming languages or frameworks
+
+Models with more supported parameters will generate better and more accurate suggestions. Consider using:
+
+- `codellama:13b` or `codellama:34b` for code completion
+- `llama3:8b` or `llama3:70b` for general assistance
+- `wizard-coder` models for advanced programming help
+
+## Efficient Usage
+
+- Be specific in your questions to get the most relevant answers
+- Provide sufficient context when asking about complex code
+- Use the workspace search option sparingly as it can be resource-intensive
+- For code-specific questions, select the relevant code first before asking
+
+## Configuration
+
+You can configure the extension through VS Code settings:
+
+- **Ollama Default Model**: Set your preferred model (`ollama.defaultModel`)
+
+## Troubleshooting
+
+### Common Issues
+
+- **No Suggestions Appearing**: Ensure Ollama is running in the background
+- **Slow Performance**: Try using a smaller model or provide less context
+- **Model Not Found**: Make sure the model is downloaded in Ollama
+
+### Connection Issues
+
+If the extension can't connect to Ollama:
+
+1. Verify Ollama is running (`ollama serve`)
+2. Check that Ollama is accessible at http://localhost:11434
+3. Restart VS Code if necessary
+
+## Privacy
+
+All processing happens locally on your machine through your installed Ollama instance. No data is sent to external servers.
+
+## Feedback and Contributions
+
+We welcome feedback and contributions! Please submit issues and pull requests on our GitHub repository.
+
+## License
+
+[MIT License](LICENSE)
