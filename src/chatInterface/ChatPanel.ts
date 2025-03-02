@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ChatMessageHandler } from './ChatMessageHandler';
-import { getAvailableOllamaModels } from '../utils/modelHelpers';
+import { getAvailableOllamaModels, initializeOllamaClient } from '../utils/modelHelpers';
 import { getNonce } from '../utils/nonce';
 
 /**
@@ -14,6 +14,7 @@ export class ChatPanel {
   private _disposables: vscode.Disposable[] = [];
   private _messageHandler: ChatMessageHandler;
   private _selectedModel: string = '';
+  private _streamListeners: vscode.Disposable[] = [];
   
   /**
    * Private constructor for the Singleton pattern
@@ -99,18 +100,35 @@ export class ChatPanel {
    * Initializes the default model
    */
   private async _initializeDefaultModel() {
-    const config = vscode.workspace.getConfiguration('ollama');
-    const defaultModel = config.get<string>('defaultModel');
-    
-    if (defaultModel) {
-      this._selectedModel = defaultModel;
-      this._sendModelInfoToWebview();
-    } else {
-      const models = await getAvailableOllamaModels();
-      if (models.length > 0) {
-        this._selectedModel = models[0].label;
-        this._sendModelInfoToWebview();
+    try {
+      // Initialize the Ollama client first
+      const connected = await initializeOllamaClient();
+      if (!connected) {
+        this._showErrorMessage('Could not connect to Ollama server. Please make sure it is running.');
+        return;
       }
+      
+      const config = vscode.workspace.getConfiguration('ollama');
+      const defaultModel = config.get<string>('defaultModel');
+      
+      const models = await getAvailableOllamaModels();
+      console.log('Models loaded in Chat Panel:', models);
+      
+      if (models.length === 0) {
+        this._showErrorMessage('No models found. Please make sure Ollama has at least one model installed.');
+        return;
+      }
+      
+      if (defaultModel && models.some(model => model.label === defaultModel)) {
+        this._selectedModel = defaultModel;
+      } else {
+        this._selectedModel = models[0].label;
+      }
+      
+      this._sendModelInfoToWebview();
+    } catch (error) {
+      console.error('Error initializing default model:', error);
+      this._showErrorMessage(`Error initializing default model: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
   
@@ -118,13 +136,21 @@ export class ChatPanel {
    * Sends model info to the webview
    */
   private async _sendModelInfoToWebview() {
-    const models = await getAvailableOllamaModels();
-    
-    this._panel.webview.postMessage({
-      type: 'updateModelInfo',
-      models: models,
-      selectedModel: this._selectedModel
-    });
+    try {
+      const models = await getAvailableOllamaModels();
+      
+      console.log('Available models:', models);
+      console.log('Selected model:', this._selectedModel);
+      
+      this._panel.webview.postMessage({
+        type: 'updateModelInfo',
+        models: models,
+        selectedModel: this._selectedModel
+      });
+    } catch (error) {
+      console.error('Error fetching or sending model info:', error);
+      this._showErrorMessage(`Failed to load models: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
   
   /**
@@ -141,12 +167,38 @@ export class ChatPanel {
         await this._sendModelInfoToWebview();
         break;
         
+      case 'requestModels':
+        console.log('Received explicit request for models from webview');
+        await this._sendModelInfoToWebview();
+        break;
+        
       case 'addFileContext':
         await this._handleAddFileContext();
         break;
         
       case 'selectCodeForContext':
         await this._handleSelectCodeForContext();
+        break;
+        
+      case 'stopGeneration':
+        console.log('Received stop generation request');
+        // First stop the generation in the message handler
+        this._messageHandler.stopGeneration();
+        
+        // Dispose stream listeners to ensure they don't continue processing
+        this._disposeStreamListeners();
+        
+        // Notify the webview that generation was cancelled
+        this._panel.webview.postMessage({ type: 'generationCancelled' });
+        
+        // Also hide the loading indicator
+        this._panel.webview.postMessage({ type: 'setLoading', loading: false });
+        break;
+        
+      case 'newChat':
+        console.log('Starting new chat');
+        // Create a new ChatMessageHandler to reset the conversation history
+        this._messageHandler = new ChatMessageHandler();
         break;
     }
   }
@@ -171,6 +223,35 @@ export class ChatPanel {
       // Show loading indicator
       this._panel.webview.postMessage({ type: 'setLoading', loading: true });
       
+      // Dispose any existing stream listeners
+      this._disposeStreamListeners();
+      
+      // Set up streaming listeners
+      this._streamListeners.push(
+        this._messageHandler.onStream((content) => {
+          console.log('Streaming content to webview, length:', content.length);
+          this._panel.webview.postMessage({
+            type: 'streamContent',
+            content: content
+          });
+        })
+      );
+      
+      this._streamListeners.push(
+        this._messageHandler.onStreamComplete((fullContent) => {
+          console.log('Stream complete, sending to webview');
+          this._panel.webview.postMessage({
+            type: 'streamComplete'
+          });
+          
+          // Also send one final streamContent message to ensure the content is up to date
+          this._panel.webview.postMessage({
+            type: 'streamContent',
+            content: fullContent
+          });
+        })
+      );
+      
       // Process the message with the message handler
       const response = await this._messageHandler.processMessage(
         text,
@@ -179,18 +260,34 @@ export class ChatPanel {
         useWorkspace
       );
       
-      // Add the assistant's response to the chat
+      // Make sure the response is also sent to the thinking section
       this._panel.webview.postMessage({
-        type: 'addMessage',
-        role: 'assistant',
+        type: 'streamContent',
         content: response
       });
+      
+      // We don't need to add the message here since it's been streamed
+      // and the streamComplete event will finalize it
     } catch (error) {
       console.error('Error processing message:', error);
       this._showErrorMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       // Hide loading indicator
       this._panel.webview.postMessage({ type: 'setLoading', loading: false });
+      // Dispose stream listeners
+      this._disposeStreamListeners();
+    }
+  }
+  
+  /**
+   * Disposes of stream listeners
+   */
+  private _disposeStreamListeners() {
+    while (this._streamListeners.length) {
+      const listener = this._streamListeners.pop();
+      if (listener) {
+        listener.dispose();
+      }
     }
   }
   
@@ -291,11 +388,15 @@ export class ChatPanel {
         <div class="header">
             <div class="model-selector">
                 <label for="model-select">Model:</label>
-                <select id="model-select"></select>
+                <select id="model-select" name="model-select">
+                    <!-- Models will be populated here -->
+                    <option value="" disabled selected>Loading models...</option>
+                </select>
             </div>
             <div class="context-controls">
                 <button id="add-file-btn">Add File Context</button>
                 <button id="select-code-btn">Use Selected Code</button>
+                <button id="new-chat-btn">New Chat</button>
                 <label for="use-workspace">
                     <input type="checkbox" id="use-workspace" />
                     @workspace

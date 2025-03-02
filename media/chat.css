@@ -74,6 +74,15 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 150px;
+}
+
+.model-selector select {
+  width: 100%;
+  min-width: 120px;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .context-controls {
@@ -209,11 +218,61 @@ button:hover {
 
 .loading-indicator {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   padding: 10px;
   font-style: italic;
   color: var(--vscode-descriptionForeground);
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--background-color);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.loading-indicator-header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.loading-indicator-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.loading-indicator-arrow {
+  display: inline-block;
+  transition: transform 0.2s;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+.loading-indicator.collapsed .loading-indicator-arrow {
+  transform: rotate(-90deg);
+}
+
+.loading-content {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: var(--assistant-message-background);
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  border-left: 2px solid var(--button-background);
+  white-space: pre-wrap;
+  display: block;
+  box-sizing: border-box;
+}
+
+.loading-indicator.collapsed .loading-content {
+  display: none;
 }
 
 .loading-spinner {
@@ -223,7 +282,41 @@ button:hover {
   width: 16px;
   height: 16px;
   animation: spin 1s linear infinite;
-  margin-right: 6px;
+}
+
+.stop-button {
+  background-color: var(--input-background);
+  color: var(--input-foreground);
+  padding: 2px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.stop-button:hover {
+  background-color: var(--button-hover-background);
+}
+
+.chat-message.streaming {
+  border-left: 2px solid var(--button-background);
+  position: relative;
+}
+
+.chat-message.streaming::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  height: 14px;
+  background-color: var(--button-background);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 @keyframes spin {
@@ -243,6 +336,7 @@ button:hover {
 /* Remove green background and extra padding for file selection and copy buttons */
 #add-file-btn, 
 #select-code-btn,
+#new-chat-btn,
 .copy-button {
   background-color: var(--input-background);
   color: var(--input-foreground);
@@ -252,6 +346,17 @@ button:hover {
 
 #add-file-btn:hover, 
 #select-code-btn:hover,
+#new-chat-btn:hover,
 .copy-button:hover {
   background-color: var(--button-hover-background);
+}
+
+.cancelled-message {
+  text-align: center;
+  color: var(--vscode-errorForeground);
+  font-style: italic;
+  padding: 5px;
+  margin: 8px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
 } 

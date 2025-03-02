@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import ollama from 'ollama';
+import { EventEmitter } from 'events';
 
 /**
  * Handles chat messages and generates responses from Ollama
@@ -12,12 +13,53 @@ export class ChatMessageHandler {
     content: string
   }[] = [];
   
+  // Event emitter for streaming responses
+  private _streamEmitter = new EventEmitter();
+  
+  // Flag to track if generation should be stopped
+  private _stopGeneration = false;
+  
   constructor() {
     // Add a system message to start the conversation
     this._messageHistory.push({
       role: 'system',
       content: 'You are a helpful assistant specializing in coding and software development. Analyze code, answer questions, and provide suggestions to help the user with their programming tasks.'
     });
+  }
+  
+  /**
+   * Adds an event listener for streaming responses
+   */
+  public onStream(callback: (content: string) => void): { dispose: () => void } {
+    this._streamEmitter.on('stream', callback);
+    return {
+      dispose: () => {
+        this._streamEmitter.removeListener('stream', callback);
+      }
+    };
+  }
+  
+  /**
+   * Adds an event listener for when streaming is complete
+   */
+  public onStreamComplete(callback: (fullContent: string) => void): { dispose: () => void } {
+    this._streamEmitter.on('streamComplete', callback);
+    return {
+      dispose: () => {
+        this._streamEmitter.removeListener('streamComplete', callback);
+      }
+    };
+  }
+  
+  /**
+   * Stops the current generation
+   */
+  public stopGeneration(): void {
+    console.log('Stopping generation');
+    this._stopGeneration = true;
+    
+    // Emit a special event to signal that generation was stopped by user
+    this._streamEmitter.emit('streamComplete', 'Generation stopped by user.');
   }
   
   /**
@@ -167,17 +209,46 @@ export class ChatMessageHandler {
    */
   private async _getOllamaResponse(model: string): Promise<string> {
     try {
+      // Reset stop flag
+      this._stopGeneration = false;
+      
       // Limit the number of messages to prevent token limits
       const messageHistoryLimit = 10;
       const limitedHistory = this._messageHistory.slice(-messageHistoryLimit);
       
-      const response = await ollama.chat({
+      let fullResponse = '';
+      console.log(`Starting Ollama response streaming with model: ${model}`);
+      
+      // Use streaming API
+      const stream = await ollama.chat({
         model: model,
         messages: limitedHistory,
-        stream: false
+        stream: true
       });
       
-      return response.message.content;
+      for await (const chunk of stream) {
+        // Check if generation should be stopped
+        if (this._stopGeneration) {
+          console.log('Generation stopped by user flag');
+          // Add a note to the response
+          fullResponse += "\n\n[Generation stopped by user]";
+          break;
+        }
+        
+        const content = chunk.message.content;
+        if (content) {
+          fullResponse += content;
+          // Emit the current complete response
+          console.log(`Emitting stream event, response length: ${fullResponse.length}`);
+          this._streamEmitter.emit('stream', fullResponse);
+        }
+      }
+      
+      // Emit stream complete event
+      console.log(`Stream complete, final response length: ${fullResponse.length}`);
+      this._streamEmitter.emit('streamComplete', fullResponse);
+      
+      return fullResponse;
     } catch (error) {
       console.error('Error getting Ollama response:', error);
       throw new Error(`Failed to get response from Ollama: ${error instanceof Error ? error.message : String(error)}`);

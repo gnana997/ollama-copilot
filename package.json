@@ -41,6 +41,11 @@
         "ollama.defaultModel": {
           "type": "string",
           "description": "Default model to use with Ollama Copilot"
+        },
+        "ollama.apiHost": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama API host URL (e.g., http://localhost:11434)"
         }
       }
     },
