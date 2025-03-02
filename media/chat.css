@@ -238,4 +238,20 @@ button:hover {
   padding: 8px;
   margin: 10px 0;
   border-radius: 3px;
+}
+
+/* Remove green background and extra padding for file selection and copy buttons */
+#add-file-btn, 
+#select-code-btn,
+.copy-button {
+  background-color: var(--input-background);
+  color: var(--input-foreground);
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+}
+
+#add-file-btn:hover, 
+#select-code-btn:hover,
+.copy-button:hover {
+  background-color: var(--button-hover-background);
 } 
