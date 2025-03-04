@@ -103,20 +103,8 @@
     
     // Handle new chat button
     newChatBtn.addEventListener('click', () => {
-      // Clear the chat UI
-      chatMessages.innerHTML = '';
-      
-      // Clear context files
-      contextFiles = [];
-      updateContextFilesUI();
-      
-      // Update state
-      updateState();
-      
-      // Notify the extension to clear message history
-      vscode.postMessage({
-        type: 'newChat'
-      });
+      console.log('New chat button clicked');
+      vscode.postMessage({ type: 'newChat' });
     });
     
     // Handle add file button
@@ -268,145 +256,80 @@
     updateState();
   }
   
-  // Add a message to the UI
-  function addMessageToUI(role, content) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `chat-message ${role}`;
-    
-    // Process markdown-like code blocks in the content
-    content = content.replace(/```([a-z]*)\n([\s\S]*?)```/g, function(match, language, code) {
-      return `<pre><code class="language-${language}">${escapeHtml(code)}</code></pre>`;
-    });
-    
-    // Process inline code
-    content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
-    
-    messageDiv.innerHTML = content;
-    chatMessages.appendChild(messageDiv);
-    
-    // Scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    
-    // Update state
-    updateState();
-  }
-  
-  // Escape HTML to prevent XSS
-  function escapeHtml(html) {
-    const div = document.createElement('div');
-    div.textContent = html;
-    return div.innerHTML;
-  }
-  
   // Show loading indicator
   function showLoading(loading) {
     console.log('Setting loading state to:', loading);
     isLoading = loading;
     
     if (loading) {
-      // Check if loading indicator already exists
-      let loadingDiv = document.getElementById('loading-indicator');
-      if (loadingDiv) {
-        console.log('Loading indicator already exists, making sure it is visible');
+        // Check if loading indicator already exists
+        let loadingDiv = document.getElementById('loading-indicator');
+        if (loadingDiv) {
+            console.log('Loading indicator already exists, making sure it is visible');
+            loadingDiv.style.display = 'flex';
+            return;
+        }
+        
+        console.log('Creating loading indicator');
+        loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-indicator';
+        loadingDiv.id = 'loading-indicator';
         loadingDiv.style.display = 'flex';
-        return;
-      }
-      
-      console.log('Creating loading indicator');
-      loadingDiv = document.createElement('div');
-      // Remove 'collapsed' class so thinking section is open by default
-      loadingDiv.className = 'loading-indicator';
-      loadingDiv.id = 'loading-indicator';
-      loadingDiv.style.display = 'flex';
-      
-      // Create header container
-      const headerDiv = document.createElement('div');
-      headerDiv.className = 'loading-indicator-header';
-      
-      // Create left side of header (spinner, arrow, text)
-      const leftDiv = document.createElement('div');
-      leftDiv.className = 'loading-indicator-left';
-      
-      const arrow = document.createElement('span');
-      arrow.className = 'loading-indicator-arrow';
-      arrow.textContent = '▼';
-      
-      const spinner = document.createElement('div');
-      spinner.className = 'loading-spinner';
-      
-      const text = document.createElement('span');
-      text.textContent = 'Thinking...';
-      
-      leftDiv.appendChild(arrow);
-      leftDiv.appendChild(spinner);
-      leftDiv.appendChild(text);
-      
-      // Create right side with stop button
-      const stopButton = document.createElement('button');
-      stopButton.textContent = 'Stop';
-      stopButton.className = 'stop-button';
-      stopButton.addEventListener('click', (e) => {
-        e.stopPropagation(); // Prevent toggle when clicking stop
-        console.log('Stop generation button clicked in chat.js');
-        vscode.postMessage({
-          type: 'stopGeneration'
+        
+        // Create header container
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'loading-indicator-header';
+        
+        // Create left side of header (spinner, text)
+        const leftDiv = document.createElement('div');
+        leftDiv.className = 'loading-indicator-left';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner';
+        
+        const text = document.createElement('span');
+        text.textContent = 'Thinking...';
+        
+        leftDiv.appendChild(spinner);
+        leftDiv.appendChild(text);
+        
+        // Create right side with stop button
+        const stopButton = document.createElement('button');
+        stopButton.textContent = 'Stop';
+        stopButton.className = 'stop-button';
+        stopButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('Stop generation button clicked in chat.js');
+            vscode.postMessage({
+                type: 'stopGeneration'
+            });
         });
-      });
-      
-      // Add left and right sides to header
-      headerDiv.appendChild(leftDiv);
-      headerDiv.appendChild(stopButton);
-      
-      // Create content area for streaming content during thinking
-      const contentDiv = document.createElement('div');
-      contentDiv.className = 'loading-content';
-      contentDiv.id = 'loading-content';
-      
-      // Add everything to the loading indicator
-      loadingDiv.appendChild(headerDiv);
-      loadingDiv.appendChild(contentDiv);
-      
-      // Make the header toggle the collapsed state
-      headerDiv.addEventListener('click', () => {
-        loadingDiv.classList.toggle('collapsed');
-        console.log('Loading indicator collapsed state toggled:', loadingDiv.classList.contains('collapsed'));
-      });
-      
-      chatMessages.appendChild(loadingDiv);
-      
-      // Create a streaming message container
-      const streamingDiv = document.createElement('div');
-      streamingDiv.className = 'chat-message assistant streaming';
-      streamingDiv.id = 'streaming-message';
-      chatMessages.appendChild(streamingDiv);
-      
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      
-      // Disable input while loading
-      messageInput.disabled = true;
-      sendButton.disabled = true;
+        
+        // Add left and right sides to header
+        headerDiv.appendChild(leftDiv);
+        headerDiv.appendChild(stopButton);
+        
+        // Add header to loading indicator
+        loadingDiv.appendChild(headerDiv);
+        
+        chatMessages.appendChild(loadingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Disable input while loading
+        messageInput.disabled = true;
+        sendButton.disabled = true;
     } else {
-      console.log('Removing loading indicator and streaming message');
-      // Remove loading indicator
-      const loadingIndicator = document.getElementById('loading-indicator');
-      if (loadingIndicator) {
-        loadingIndicator.remove();
-      } else {
-        console.log('No loading indicator found to remove');
-      }
-      
-      // Remove streaming message if it wasn't completed
-      const streamingMessage = document.getElementById('streaming-message');
-      if (streamingMessage) {
-        streamingMessage.remove();
-      } else {
-        console.log('No streaming message found to remove');
-      }
-      
-      // Enable input
-      messageInput.disabled = false;
-      sendButton.disabled = false;
-      messageInput.focus();
+        console.log('Removing loading indicator');
+        // Remove loading indicator
+        const loadingIndicator = document.getElementById('loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.remove();
+        }
+        
+        // Enable input
+        messageInput.disabled = false;
+        sendButton.disabled = false;
+        messageInput.focus();
     }
   }
   
@@ -649,6 +572,61 @@
       case 'showError':
         showError(message.message);
         break;
+        
+      case 'clearChat':
+        // Clear chat messages
+        if (chatMessages) {
+          chatMessages.innerHTML = '';
+        }
+        // Clear input
+        if (messageInput) {
+          messageInput.value = '';
+        }
+        // Clear context files
+        if (contextFilesList) {
+          contextFilesList.innerHTML = '';
+        }
+        // Reset workspace checkbox
+        if (useWorkspaceCheckbox) {
+          useWorkspaceCheckbox.checked = false;
+        }
+        break;
     }
   });
+  
+  // Add a message to the UI
+  function addMessageToUI(role, content) {
+    // Remove any existing loading indicator
+    const loadingIndicator = document.getElementById('loading-indicator');
+    if (loadingIndicator) {
+        loadingIndicator.remove();
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role}`;
+    
+    // Process markdown-like code blocks in the content
+    content = content.replace(/```([a-z]*)\n([\s\S]*?)```/g, function(match, language, code) {
+        return `<pre><code class="language-${language}">${escapeHtml(code)}</code></pre>`;
+    });
+    
+    // Process inline code
+    content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    messageDiv.innerHTML = content;
+    chatMessages.appendChild(messageDiv);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Update state
+    updateState();
+  }
+  
+  // Escape HTML to prevent XSS
+  function escapeHtml(html) {
+    const div = document.createElement('div');
+    div.textContent = html;
+    return div.innerHTML;
+  }
 })(); 

@@ -29,7 +29,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Register the command to select default model
 	context.subscriptions.push(vscode.commands.registerCommand("ollama-copilot.selectDefaultModel", async () => {
-		await getSelectedModel();
+		const models = await getAvailableOllamaModels();
+		vscode.window.showQuickPick(models, {
+			placeHolder: "Select a model",
+			matchOnDetail: true,
+			matchOnDescription: true,
+		});
 	}));
 	
 	// Register a command to clear the completion cache

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ChatMessageHandler } from './ChatMessageHandler';
-import { getAvailableOllamaModels } from '../utils/modelHelpers';
+import { getAvailableOllamaModels, initializeOllamaClient } from '../utils/modelHelpers';
 import { getNonce } from '../utils/nonce';
 
 /**
@@ -33,38 +33,55 @@ export class SidebarChatViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
-        this._extensionUri
+        vscode.Uri.joinPath(this._extensionUri, 'media')
       ]
     };
 
     // Set the HTML content
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
+    // Initialize the default model after the webview is ready
+    this._initializeDefaultModel().catch(error => {
+      console.error('Error initializing default model:', error);
+      this._showErrorMessage(`Failed to initialize models: ${error instanceof Error ? error.message : String(error)}`);
+    });
+
     // Handle messages from the webview
     webviewView.webview.onDidReceiveMessage(async (message) => {
       await this._handleMessage(message);
     });
-
-    // Initialize with default model
-    this._initializeDefaultModel();
   }
 
   /**
    * Initializes the default model
    */
   private async _initializeDefaultModel() {
-    const config = vscode.workspace.getConfiguration('ollama');
-    const defaultModel = config.get<string>('defaultModel');
-    
-    if (defaultModel) {
-      this._selectedModel = defaultModel;
-      await this._sendModelInfoToWebview();
-    } else {
-      const models = await getAvailableOllamaModels();
-      if (models.length > 0) {
-        this._selectedModel = models[0].label;
-        await this._sendModelInfoToWebview();
-      }
+    try {
+        // First ensure Ollama is connected
+        const connected = await initializeOllamaClient();
+        if (!connected) {
+            this._showErrorMessage('Could not connect to Ollama server. Please make sure it is running.');
+            return;
+        }
+
+        const config = vscode.workspace.getConfiguration('ollama');
+        const defaultModel = config.get<string>('defaultModel');
+        
+        if (defaultModel) {
+            this._selectedModel = defaultModel;
+            await this._sendModelInfoToWebview();
+        } else {
+            const models = await getAvailableOllamaModels();
+            if (models.length > 0) {
+                this._selectedModel = models[0].label;
+                await this._sendModelInfoToWebview();
+            } else {
+                this._showErrorMessage('No models found. Please make sure Ollama has at least one model installed.');
+            }
+        }
+    } catch (error) {
+        console.error('Error in _initializeDefaultModel:', error);
+        this._showErrorMessage(`Failed to initialize models: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -106,6 +123,10 @@ export class SidebarChatViewProvider implements vscode.WebviewViewProvider {
       case 'selectCodeForContext':
         await this._handleSelectCodeForContext();
         break;
+
+      case 'newChat':
+        await this._handleNewChat();
+        break;
     }
   }
 
@@ -139,7 +160,10 @@ export class SidebarChatViewProvider implements vscode.WebviewViewProvider {
         useWorkspace
       );
       
-      // Add the assistant's response to the chat
+      // Hide loading indicator first
+      this._view.webview.postMessage({ type: 'setLoading', loading: false });
+      
+      // Then add the assistant's response to the chat
       this._view.webview.postMessage({
         type: 'addMessage',
         role: 'assistant',
@@ -148,8 +172,7 @@ export class SidebarChatViewProvider implements vscode.WebviewViewProvider {
     } catch (error) {
       console.error('Error processing message:', error);
       this._showErrorMessage(`Error: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      // Hide loading indicator
+      // Ensure loading indicator is hidden on error
       this._view.webview.postMessage({ type: 'setLoading', loading: false });
     }
   }
@@ -206,6 +229,21 @@ export class SidebarChatViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
+   * Handles starting a new chat
+   */
+  private async _handleNewChat() {
+    if (!this._view) return;
+    
+    // Clear the chat messages
+    this._view.webview.postMessage({
+      type: 'clearChat'
+    });
+    
+    // Reset the message handler
+    this._messageHandler = new ChatMessageHandler();
+  }
+
+  /**
    * Shows an error message
    */
   private _showErrorMessage(message: string) {
@@ -255,6 +293,7 @@ export class SidebarChatViewProvider implements vscode.WebviewViewProvider {
         <div class="context-controls">
             <button id="add-file-btn" title="Add File Context">📎</button>
             <button id="select-code-btn" title="Use Selected Code">📄</button>
+            <button id="new-chat-btn" title="Start New Chat">🔄</button>
             <label for="use-workspace" title="Search workspace">
                 <input type="checkbox" id="use-workspace" />
                 @workspace
