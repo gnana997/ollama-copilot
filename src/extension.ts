@@ -66,6 +66,27 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand("ollama-copilot.openChatPanel", () => {
 		ChatPanel.createOrShow(context.extensionUri);
 	}));
+
+	// Register the command to update the Ollama host
+	context.subscriptions.push(vscode.commands.registerCommand("ollama-copilot.updateOllamaHost", async () => {
+		const host = await vscode.window.showInputBox({
+			prompt: "Enter the new Ollama API host URL",
+			validateInput: (value) => {
+				if (!value) return "Host URL is required";
+				try {
+					new URL(value);
+					return null;
+				} catch (error) {
+					return "Invalid URL";
+				}
+			}
+		});
+
+		if (host) {
+			config.update("ollama.apiHost", host, true);
+			vscode.window.showInformationMessage("Ollama host updated successfully");
+		}
+	}));
 }
 
 // This method is called when your extension is deactivated

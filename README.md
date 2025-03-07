@@ -4,14 +4,27 @@ Ollama Copilot integrates local LLMs from [Ollama](https://ollama.ai/) directly 
 
 ## Features
 
-- **AI-powered code completions**: Get contextual code suggestions as you type
-- **Dedicated chat interface**: Ask questions about your code and get detailed responses
+- **AI-powered code completions**: Get contextual code suggestions as you type, with support for:
+  - Variable and function name awareness
+  - Context-aware completions based on surrounding code
+  - Multi-line code suggestions
+  - Language-specific completions
+- **Dedicated chat interface**: Ask questions about your code and get detailed responses through:
+  - Sidebar chat panel for quick access
+  - Dedicated chat view for more detailed discussions
+  - Real-time streaming responses
 - **Local model selection**: Choose from any model installed in Ollama
-- **Context-aware assistance**: The extension can analyze:
+- **Context-aware assistance**: The extension analyzes:
   - Selected code snippets
   - Specific files you choose
   - Your entire workspace
+  - Function purposes and documentation
+  - Variables in scope
 - **Privacy-focused**: All processing happens locally on your machine through Ollama
+- **Customizable configuration**: Set your preferred:
+  - Default model
+  - API host
+  - Workspace context settings
 
 ## Prerequisites
 
@@ -46,101 +59,88 @@ ollama list
 
 ### Code Completion
 
-Code completion is automatically active while you type. The extension analyzes your code and suggests completions based on your context.
+Code completion is automatically active while you type. The extension analyzes your code context, including:
+- Variables in scope
+- Function declarations and parameters
+- Comments and documentation
+- Surrounding code context
 
 ### Chat Interface
 
-Access the chat interface through the Ollama Chat icon in the activity bar (sidebar):
+Two ways to access the chat:
+1. **Sidebar Chat**: Quick access through the Ollama Chat icon in the activity bar
+2. **Dedicated Chat Panel**: Full-featured chat interface with more options
 
-1. Click on the Ollama Chat icon in the sidebar
-2. Select a model from the dropdown menu
-3. Type your question in the input box and click Send
+Chat features include:
+- Model selection dropdown
+- Context file management
+- Code snippet integration
+- Workspace context toggle
+- Real-time streaming responses
 
 #### Adding Context
 
 The chat interface provides several ways to add context:
 
-- **Add Selected Code**: Select code in your editor, then click the "📄" button to add it to your conversation
-- **Add File Context**: Click the "📎" button to choose specific files for reference
+- **Add Selected Code**: Select code in your editor, then click the "📄" button
+- **Add File Context**: Click the "📎" button to choose specific files
 - **Workspace Context**: Enable the "@workspace" checkbox to analyze your entire workspace
-
-### Example Prompts
-
-Here are some effective prompts to try with your code:
-
-#### Code Improvement
-- "How can I optimize this function for better performance?"
-- "Refactor this code to be more readable"
-- "Find potential bugs in this code"
-
-#### Learning and Understanding
-- "Explain what this code does in simple terms"
-- "What design pattern is being used here?"
-- "How does this algorithm work?"
-
-#### Development Assistance
-- "Generate unit tests for this function"
-- "What's a better way to implement this feature?"
-- "Help me debug this error: [paste error message]"
-
-#### With Context
-- "I'm working on a React component. How can I prevent unnecessary re-renders?"
-- "This is my Express route handler. How should I add proper error handling?"
-- "I'm using TypeScript with this Angular service. Help me fix these type errors."
 
 ### Commands
 
-The extension provides the following commands (access via Command Palette - `Ctrl+Shift+P` or `Cmd+Shift+P`):
+Access these commands via Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`):
 
 - **Open Ollama Chat Panel**: Opens the chat panel as a separate view
 - **Select Default Model**: Change the default Ollama model
 - **Search Available Models**: List all available models in Ollama
 - **Clear Completion Cache**: Clear the cached completions
 
-## Model Recommendations
+## Configuration
 
-> ⚠️ **Important**: The quality of suggestions and responses directly depends on the capability of your selected model. Larger, more capable models will generally provide better results.
+Configure the extension through VS Code settings:
+
+- **Default Model**: Set your preferred model (`ollama.defaultModel`)
+- **API Host**: Configure the Ollama API endpoint (`ollama.apiHost`)
+
+## Model Recommendations
 
 For the best experience, we recommend:
 
-- **Code Completion**: Models fine-tuned for code generation (CodeLlama, WizardCoder)
-- **General Assistance**: Larger models with 7B+ parameters
-- **Specialized Tasks**: Models trained for specific programming languages or frameworks
-
-Models with more supported parameters will generate better and more accurate suggestions. Consider using:
-
-- `codellama:13b` or `codellama:34b` for code completion
-- `llama3:8b` or `llama3:70b` for general assistance
-- `wizard-coder` models for advanced programming help
-
-## Efficient Usage
-
-- Be specific in your questions to get the most relevant answers
-- Provide sufficient context when asking about complex code
-- Use the workspace search option sparingly as it can be resource-intensive
-- For code-specific questions, select the relevant code first before asking
-
-## Configuration
-
-You can configure the extension through VS Code settings:
-
-- **Ollama Default Model**: Set your preferred model (`ollama.defaultModel`)
+- **Code Completion**: Models fine-tuned for code generation
+  - `codellama:13b` or `codellama:34b`
+  - `wizardcoder:13b` or `wizardcoder:34b`
+- **General Assistance**: Larger models with broad knowledge
+  - `llama3:8b` or `llama3:70b`
+  - `mistral:7b` or `mixtral:8x7b`
+- **Specialized Tasks**: Task-specific models
+  - `deepseek-coder:6.7b` or `deepseek-coder:33b` for code
+  - `phind-codellama:34b` for programming Q&A
 
 ## Troubleshooting
 
 ### Common Issues
 
-- **No Suggestions Appearing**: Ensure Ollama is running in the background
-- **Slow Performance**: Try using a smaller model or provide less context
-- **Model Not Found**: Make sure the model is downloaded in Ollama
+- **No Suggestions Appearing**: 
+  - Ensure Ollama is running (`ollama serve`)
+  - Check model is properly loaded
+  - Clear completion cache and restart
+- **Slow Performance**: 
+  - Try using a smaller model
+  - Reduce context size
+  - Clear completion cache
+- **Model Not Found**: 
+  - Verify model is downloaded in Ollama
+  - Check model name spelling
+  - Run `ollama list` to see available models
 
 ### Connection Issues
 
 If the extension can't connect to Ollama:
 
 1. Verify Ollama is running (`ollama serve`)
-2. Check that Ollama is accessible at http://localhost:11434
-3. Restart VS Code if necessary
+2. Check the API host setting (`ollama.apiHost`)
+3. Ensure port 11434 is accessible
+4. Restart VS Code if necessary
 
 ## Privacy
 
