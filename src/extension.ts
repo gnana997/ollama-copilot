@@ -354,6 +354,70 @@ Validations by field: ${JSON.stringify(stats.validationsByField, null, 2)}
       }
     })
   );
+
+  // File operations command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('ollama-copilot.showFileOperations', () => {
+      if (resourceManager && isFunction(resourceManager.showStatus)) {
+        // Show resource status which includes file operations
+        resourceManager.showStatus();
+      } else {
+        // Fallback: show basic information about current file operations
+        const stats = resourceManager?.getStats();
+        if (stats) {
+          const message = `Active File Operations:
+Total resources: ${stats.totalResources}
+Resources by type: ${Object.entries(stats.resourcesByType)
+            .map(([type, count]) => `${type}: ${count}`)
+            .join(', ') || 'None'}
+${stats.oldestResource ? `Oldest: ${stats.oldestResource.toLocaleString()}` : ''}
+${stats.newestResource ? `Newest: ${stats.newestResource.toLocaleString()}` : ''}`;
+          
+          vscode.window.showInformationMessage(message, { modal: true });
+        } else {
+          vscode.window.showInformationMessage('No active file operations found');
+        }
+      }
+    })
+  );
+
+  // Validate configuration command
+  context.subscriptions.push(
+    vscode.commands.registerCommand('ollama-copilot.validateConfiguration', async () => {
+      try {
+        const result = await configService.validate();
+        
+        if (result.isValid) {
+          vscode.window.showInformationMessage('Configuration is valid');
+        } else {
+          const errorDetails = result.errors
+            .map(error => `${error.section}.${error.key}: ${error.message}`)
+            .join('\n');
+          
+          const choice = await vscode.window.showWarningMessage(
+            `Configuration validation found ${result.errors.length} issue(s)`,
+            { modal: true },
+            'Show Details',
+            'Fix Issues'
+          );
+          
+          if (choice === 'Show Details') {
+            vscode.window.showInformationMessage(
+              `Configuration Errors:\n${errorDetails}`,
+              { modal: true }
+            );
+          } else if (choice === 'Fix Issues') {
+            // Open settings to allow user to fix issues
+            await vscode.commands.executeCommand('workbench.action.openSettings', 'ollama');
+          }
+        }
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          `Failed to validate configuration: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    })
+  );
 }
 
 /**
